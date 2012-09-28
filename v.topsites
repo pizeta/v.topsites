@@ -4,7 +4,7 @@
 # v.topsites
 #
 # SCRIPT:   	GRASS modules for the automatic detection of hill-top sites candidates
-# AUTHOR(S):	Paolo Zatelli - 2012/06/07
+# AUTHOR(S):	Paolo Zatelli - 2012/09/28
 # PURPOSE:  	
 #   	    	
 # COPYRIGHT:	2012 Paolo Zatelli
@@ -20,6 +20,10 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #
 ############################################################################# 
+
+# TODO 
+# - add r.seg beta and lambda flag
+# - ask user output ma name
 
 #%Module
 #%  description: Hill-top sites detection using segmentation and filtering
