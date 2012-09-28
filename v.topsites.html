@@ -1,0 +1,115 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>GRASS GIS manual: v.topsites</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link rel="stylesheet" href="grassdocs.css" type="text/css">
+</head>
+<body bgcolor="white">
+
+<img src="grass_logo.png" alt="GRASS logo"><hr align=center size=6 noshade>
+
+<h2>NAME</h2>
+<em><b>v.topsites</b></em> - Topsites detection using segmentation and filtering
+<h2>KEYWORDS</h2>
+vector, DTM filtering
+<h2>SYNOPSIS</h2>
+<b>v.topsites</b><br>
+<b>v.topsites help</b><br>
+<b>v.topsites</b> [-<b>k</b>] <b>dtm</b>=<em>name</em> [<b>resolution</b>=<em>float</em>]  [<b>alpha</b>=<em>float</em>] [<b>threshold_comp</b>=<em>float</em>]  [<b>threshold_curv</b>=<em>float</em>] [--<b>verbose</b>]  [--<b>quiet</b>] 
+
+<h3>Flags:</h3>
+<DL>
+<DT><b>-k</b></DT>
+<DD>Keep (do not delete) intermediate maps</DD>
+<DT><b>--verbose</b></DT>
+<DD>Verbose module output</DD>
+<DT><b>--quiet</b></DT>
+<DD>Quiet module output</DD>
+</DL>
+
+<h3>Parameters:</h3>
+<DL>
+<DT><b>dtm</b>=<em>name</em></DT>
+<DD>Name of input raster map representing a Digital Terrain Model</DD>
+
+<DT><b>resolution</b>=<em>float</em></DT>
+<DD>Resolution used for the analysis. If a value is not specified, the resolution of the current region is used.</DD>
+
+
+<DT><b>alpha</b>=<em>float</em></DT>
+<DD>Value of the <i>alpha</i> parameter used for the DTM segmentation, default is 25</DD>
+
+<DT><b>threshold_comp</b>=<em>float</em></DT>
+<DD>Compactness threshold for areas filtering, default is 2</DD>
+
+<DT><b>threshold_curv</b>=<em>float</em></DT>
+<DD>Curvature threshold for areas filtering, default is 0.001</DD>
+
+
+</DL>
+<h2>DESCRIPTION</h2>
+
+<em>v.topsites</em> automatically detects hill-top sites candidates from a DTM.
+<br>
+
+This is accomplished in two steps:<br>
+
+<ul>
+<li> the DTM is segmented using GRASS' r.seg module (http://www.ing.unitn.it/~vittia/sw/)</li>
+<li> the resulting areas are filtered according to compactness and mean curvature of the terrain in each area</li>
+</ul>
+
+The module creates one map containing the hill-top sites candidate areas and nine intermediate maps.
+
+<br>
+The output map is a vector map named as the input DTM map plus the "_hilltopsites" suffix. For example, if the input DTM map is named "elevation", the output hill-top sites map is named "elevation_hilltopsites".
+
+<p>Nine intermediate maps are created and automatically deleted at the end of the process, unless the <i>k</i> flag is selected. If $dtm identifies the DTM input map name:</p>
+
+<ul>
+<li> $dtm"_prof_curv" is the name of the profile curvature raster map</li>
+<li> $dtm"_seg" is the name of the segmented DTM raster map</li>
+<li> $dtm"_disc" is the name of the DTM discontinuities raster map</li>
+<li> $dtm"_clump" is the name of the DTM discontinuities raster map, after clumping areas</li>
+<li> $dtm"_clump" is the name of the DTM discontinuities vector map, after clumping areas</li>
+<li> $dtm"_aver_curv" is the name of raster map containing the average curvature for each area</li>
+<li> $dtm"_points" is the name of the vector map containing clumped areas, with centroids transformed to points</li>
+<li> $dtm"_areas" is the name of the vector map containing clumped areas, with centroids transformed to points</li>
+<li> $dtm"_points" is the name of the vector map containing clumped areas, with points transformed back to centroids, with a complete attribute table, as specified below. Areas are not filtered by compactness and curvature</li>
+</ul>
+
+
+A brief description of this approach and an introductory discussion of the results can be found in "Elisa Rosciano, Fabio Cavulli, Marco Ciolli, Alfonso Vitti, Paolo Zatelli, DTM segmentation and analysis for archaeological hill-top sites recognition in GRASS, 2011, Geomatics Workbooks", available here http://geomatica.como.polimi.it/workbooks/n10/GW10-FOSS4Git_2011.pdf. Further papers are in preparation.
+
+
+<h2>EXAMPLE</h2>
+
+Create the "elevation_hilltopsite" map with resolution 10 map units (usually meters), segmenting the DTM map with value of the alpha parameter equal to 22, filtering the resulting areas by selecting those whose compactness is lower than 2.2 and mean curvature is higher than 0.002.
+
+<div class="code"><pre>
+v.topsites dtm=elevation resolution=10 alpha=22 threshold_comp=2.2 threshold_curv=0.002
+</pre></div>
+
+Create the "dtm001_hilltopsite" map with resolution of the current region, segmenting the DTM map with value of the alpha parameter equal to 25, filtering the resulting areas by selecting those whose compactness is lower than 2 and mean curvature is higher than 0.001.
+
+<div class="code"><pre>
+v.topsites dtm=dtm001
+</pre></div>
+
+
+<h2>SEE ALSO</h2>
+<em>
+<a href="r.seg.html">r.seg</a>, <a href="g.region.html">g.region</a>, <a href="v.extract.html">v.extract</a>, <a href="v.to.db.html">v.to.db</a>, <a href="i.zc.html">i.zc</a>
+</em>
+
+<h2>AUTHOR</h2>
+
+<a href="http://www.ing.unitn.it/~grass">Paolo Zatelli</a> (<a href="mailto:paolo.zatelli AT ing dot unitn dot it">email</a>).
+
+<p><i>Last changed: $Date: 2012-09-28 18:10:00 +0200 (Fri, 28 Sept 2012) $</i>
+<HR>
+<P><a href="index.html">Main index</a> - <a href="vector.html">vector index</a> - <a href="full_index.html">Full index</a></P>
+<P>&copy; 2003-2012 <a href="http://grass.osgeo.org">GRASS Development Team</a></p>
+</body>
+</html>
