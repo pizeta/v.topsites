@@ -22,8 +22,8 @@
 ############################################################################# 
 
 # TODO 
-# - add r.seg beta and lambda flag
-# - ask user output ma name
+# - add r.seg beta and lambda flags
+# - ask user output map name
 
 #%Module
 #%  description: Hill-top sites detection using segmentation and filtering
