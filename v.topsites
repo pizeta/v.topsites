@@ -1,0 +1,164 @@
+#!/bin/sh
+#############################################################################
+#
+# v.topsites
+#
+# SCRIPT:   	GRASS modules for the automatic detection of hill-top sites candidates
+# AUTHOR(S):	Paolo Zatelli - 2012/06/07
+# PURPOSE:  	
+#   	    	
+# COPYRIGHT:	2012 Paolo Zatelli
+# LICENSE:	GPL 2.0 or (at your option) any later version
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+#
+############################################################################# 
+
+#%Module
+#%  description: Hill-top sites detection using segmentation and filtering
+#%End
+
+#%option
+#% key: dtm
+#% type: string
+#% gisprompt: oldraster,raster
+#% description: Input DTM/DSM
+#% required : yes
+#%end
+
+#%option
+#% key: resolution
+#% type: double
+#% description: Resolution used for the procedure (in maps units)
+#% required : no
+#%end
+
+#%option
+#% key: alpha
+#% type: double
+#% description: Alpha parameter for segmentation
+#% answer: 25
+#% required : no
+#%end
+
+#%option
+#% key: threshold_comp
+#% type: double
+#% answer: 2
+#% description: Compactness threshold
+#% required : no
+#%end
+
+#%option
+#% key: threshold_curv
+#% type: double
+#% answer: 0.001
+#% description: Curvature threshold
+#% required : no
+#%end
+
+
+# GUI input processing
+if [ "$1" != "@ARGS_PARSED@" ] ; then
+  exec g.parser "$0" "$@"
+fi
+
+# strip mapset name
+dtm=`echo $GIS_OPT_dtm | awk 'BEGIN { FS="@" } { print $1 }'`
+
+alpha=$GIS_OPT_alpha
+threshold_comp=$GIS_OPT_threshold_comp
+threshold_curv=$GIS_OPT_threshold_curv
+
+
+if [ $GIS_OPT_resolution ] ; then
+  region_options="res=$GIS_OPT_resolution"
+  
+  g.region -a $region_options
+fi
+
+#### check if we have awk
+if [ ! -x "`which awk`" ] ; then
+    g.message -e "awk required, please install awk or gawk first"
+    exit 1
+fi
+
+#### check if we have GRASS and r.seg
+if test "$GISBASE" = ""; then
+ echo "You must be in GRASS GIS to run this program." >&2
+ exit 1
+fi
+
+if [ ! -x "`which r.seg`" ] ; then
+    g.message -e "r.seg required, please install GRASS r.seg module first"
+    exit 1
+fi
+
+START_DATE=`date`
+
+eval `g.gisenv`
+: ${GISDBASE?} ${LOCATION_NAME?} ${MAPSET?}
+LOCATION="$GISDBASE/$LOCATION_NAME/$MAPSET"
+
+g.message "dtm $dtm"
+
+# g.region rast=$dtm
+# g.region -a res=$resolution
+
+# profile curvature from DTM
+g.message "Creating curvature map"
+ r.slope.aspect --overwrite -a elevation=$dtm pcurv=$dtm"_prof_curv"
+
+# segmentation
+g.message "Segmenting DTM. This may take a while..."
+ r.seg --overwrite in_g=$dtm out_u=$dtm"_seg" out_z=$dtm"_disc" alpha=$alpha
+
+# clump
+g.message "Creating clump map..."
+ r.clump --overwrite input=$dtm"_disc" output=$dtm"_clump"
+#  r.clump --overwrite input=$dtm"_seg" output=$dtm"_clump"
+
+# vector
+g.message "Converting to vector..."
+ r.to.vect --overwrite input=$dtm"_clump" output=$dtm"_clump" feature=area
+
+# columns for curvature and compactness
+g.message "Adding columns to table..."
+ v.db.addcol map=$dtm"_clump" columns="curvature double, compact double"
+
+# average curvature
+g.message "Evaluating average curvatures..."
+ r.average --overwrite base=$dtm"_clump" cover=$dtm"_prof_curv" output=$dtm"_aver_curv"
+
+# centroids to points
+g.message "Converting centroids to points..."
+v.type --overwrite input=$dtm"_clump" output=$dtm"_points" type=centroid,point
+
+# average curvature to table
+g.message "Inserting average curvature into table..."
+v.what.rast vector=$dtm"_points" raster=$dtm"_aver_curv" column=curvature
+
+# points to centroids
+g.message "Converting back points to centroids..."
+v.type --overwrite input=$dtm"_points" output=$dtm"_areas" type=point,centroid
+
+# compactness
+g.message "Evaluating compactness..."
+ v.to.db map=$dtm"_areas" option=compact columns=compact
+
+# extract areas with average curvature above threshold and compactness below threshold
+g.message "Filtering areas..."
+v.extract --overwrite input=$dtm"_areas" output=$dtm"_hilltopsites" where="curvature>$threshold_curv and compact<$threshold_comp"
+
+STOP_DATE=`date`
+g.message "Start: $START_DATE"
+g.message "Stop:  $STOP_DATE"
+
+exit 0
