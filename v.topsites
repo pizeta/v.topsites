@@ -21,10 +21,6 @@
 #
 ############################################################################# 
 
-# TODO 
-# - add r.seg beta and lambda flags
-# - ask user output map name
-
 #%Module
 #%  description: Hill-top sites detection using segmentation and filtering
 #%End
@@ -33,7 +29,15 @@
 #% key: dtm
 #% type: string
 #% gisprompt: oldraster,raster
-#% description: Input DTM/DSM
+#% description: Input raster DTM/DSM
+#% required : yes
+#%end
+
+#%option
+#% key: output
+#% type: string
+#% gisprompt: oldvector,vector
+#% description: Output hill-topsites vector map
 #% required : yes
 #%end
 
@@ -89,6 +93,11 @@
 #%  description: Do not delete intermediate maps
 #%end
 
+#%flag
+#%  key: o
+#%  description: Allow the output map to overwrite an existing map
+#%end
+
 #### check if we have GRASS and r.seg
 if test "$GISBASE" = ""; then
  echo "You must be in GRASS GIS to run this program." >&2
@@ -113,6 +122,7 @@ fi
 
 # strip mapset name
 dtm=`echo $GIS_OPT_dtm | awk 'BEGIN { FS="@" } { print $1 }'`
+output=`echo $GIS_OPT_output | awk 'BEGIN { FS="@" } { print $1 }'`
 
 alpha=$GIS_OPT_alpha
 beta=$GIS_OPT_beta
@@ -128,8 +138,14 @@ if [ $GIS_OPT_resolution ] ; then
   g.region -a $region_options
 fi
 
-
-START_DATE=`date`
+if [ $GIS_FLAG_o -eq 1 ] ; then
+  extract_options="--overwrite"
+# elif [ -n "`g.list vect | grep $output`" ] ; then
+elif [ -n "`g.list vect | grep $output`" ] ; then
+  g.message "ERROR: option <output>: $output exists."
+  g.message "Change map name or select \"Overwrite existing output map\" option."
+  exit 1
+fi
 
 eval `g.gisenv`
 : ${GISDBASE?} ${LOCATION_NAME?} ${MAPSET?}
@@ -183,7 +199,7 @@ g.message "Evaluating compactness..."
 
 # extract areas with average curvature above threshold and compactness below threshold
 g.message "Filtering areas..."
-v.extract --overwrite input=$dtm"_areas" output=$dtm"_hilltopsites" where="curvature>$threshold_curv and compact<$threshold_comp"
+v.extract input=$dtm"_areas" output=$dtm"_hilltopsites" where="curvature>$threshold_curv and compact<$threshold_comp" $extract_options
 
 # optionally delete intermediate maps (default = yes)
 if [ $GIS_FLAG_k -ne 1 ] ; then
@@ -192,10 +208,5 @@ if [ $GIS_FLAG_k -ne 1 ] ; then
     g.remove vect=$dtm"_clump",$dtm"_points",$dtm"_areas"
     g.message "Done"
 fi
-
-
-STOP_DATE=`date`
-g.message "Start: $START_DATE"
-g.message "Stop:  $STOP_DATE"
 
 exit 0
