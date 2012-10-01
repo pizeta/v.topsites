@@ -36,9 +36,14 @@ vector, DTM filtering
 <DT><b>resolution</b>=<em>float</em></DT>
 <DD>Resolution used for the analysis. If a value is not specified, the resolution of the current region is used.</DD>
 
-
 <DT><b>alpha</b>=<em>float</em></DT>
 <DD>Value of the <i>alpha</i> parameter used for the DTM segmentation, default is 25</DD>
+
+<DT><b>beta</b>=<em>float</em></DT>
+<DD>Value of the <i>beta</i> parameter used for the DTM segmentation, default is 1</DD>
+
+<DT><b>lambda</b>=<em>float</em></DT>
+<DD>Value of the <i>lambda</i> parameter used for the DTM segmentation, default is 1</DD>
 
 <DT><b>threshold_comp</b>=<em>float</em></DT>
 <DD>Compactness threshold for areas filtering, default is 2</DD>
@@ -79,21 +84,22 @@ The output map is a vector map named as the input DTM map plus the "_hilltopsite
 <li> $dtm"_points" is the name of the vector map containing clumped areas, with points transformed back to centroids, with a complete attribute table, as specified below. Areas are not filtered by compactness and curvature</li>
 </ul>
 
+<p>if those maps exist, they will be overwritten.</p>
 
-<p>A brief description of this approach and an introductory discussion of the results can be found in "Elisa Rosciano, Fabio Cavulli, Marco Ciolli, Alfonso Vitti, Paolo Zatelli, DTM segmentation and analysis for archaeological hill-top sites recognition in GRASS, 2011, Geomatics Workbooks", available here http://geomatica.como.polimi.it/workbooks/n10/GW10-FOSS4Git_2011.pdf.</p>
+<p>A brief description of this approach and an introductory discussion of the results can be found in "Elisa Rosciano, Fabio Cavulli, Marco Ciolli, Alfonso Vitti, Paolo Zatelli, DTM segmentation and analysis for archaeological hill-top sites recognition in GRASS, 2011, Geomatics Workbooks, n. 10", available here http://geomatica.como.polimi.it/workbooks/n10/GW10-FOSS4Git_2011.pdf.</p>
 
 <p>Further papers are in preparation.</p>
 
 
 <h2>EXAMPLE</h2>
 
-Create the "elevation_hilltopsite" map with resolution 10 map units (usually meters), segmenting the DTM map with value of the alpha parameter equal to 22, filtering the resulting areas by selecting those whose compactness is lower than 2.2 and mean curvature is higher than 0.002.
+Create the "elevation_hilltopsite" map with resolution 10 map units (usually meters), segmenting the DTM map with value of the alpha parameter equal to 22, beta set to 2, lambda set to 1, filtering the resulting areas by selecting those whose compactness is lower than 2.2 and mean curvature is higher than 0.002.
 
 <div class="code"><pre>
-v.topsites dtm=elevation resolution=10 alpha=22 threshold_comp=2.2 threshold_curv=0.002
+v.topsites dtm=elevation resolution=10 alpha=22 beta=2 lambda=1 threshold_comp=2.2 threshold_curv=0.002
 </pre></div>
 
-Create the "dtm001_hilltopsite" map with resolution of the current region, segmenting the DTM map with value of the alpha parameter equal to 25, filtering the resulting areas by selecting those whose compactness is lower than 2 and mean curvature is higher than 0.001.
+Create the "dtm001_hilltopsite" map with the resolution of the current region, segmenting the DTM map with value of the alpha parameter equal to 25, beta and lambda set to 1, filtering the resulting areas by selecting those whose compactness is lower than 2 and mean curvature is higher than 0.001.
 
 <div class="code"><pre>
 v.topsites dtm=dtm001

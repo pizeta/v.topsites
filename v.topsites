@@ -40,7 +40,7 @@
 #%option
 #% key: resolution
 #% type: double
-#% description: Resolution used for the procedure (in maps units)
+#% description: Resolution used for the procedure (in map units)
 #% required : no
 #%end
 
@@ -49,6 +49,22 @@
 #% type: double
 #% description: Alpha parameter for segmentation
 #% answer: 25
+#% required : no
+#%end
+
+#%option
+#% key: beta
+#% type: double
+#% description: Beta parameter for segmentation
+#% answer: 1
+#% required : no
+#%end
+
+#%option
+#% key: lambda
+#% type: double
+#% description: Lambda parameter for segmentation
+#% answer: 1
 #% required : no
 #%end
 
@@ -73,31 +89,6 @@
 #%  description: Do not delete intermediate maps
 #%end
 
-# GUI input processing
-if [ "$1" != "@ARGS_PARSED@" ] ; then
-  exec g.parser "$0" "$@"
-fi
-
-# strip mapset name
-dtm=`echo $GIS_OPT_dtm | awk 'BEGIN { FS="@" } { print $1 }'`
-
-alpha=$GIS_OPT_alpha
-threshold_comp=$GIS_OPT_threshold_comp
-threshold_curv=$GIS_OPT_threshold_curv
-
-
-if [ $GIS_OPT_resolution ] ; then
-  region_options="res=$GIS_OPT_resolution"
-  
-  g.region -a $region_options
-fi
-
-#### check if we have awk
-if [ ! -x "`which awk`" ] ; then
-    g.message -e "awk required, please install awk or gawk first"
-    exit 1
-fi
-
 #### check if we have GRASS and r.seg
 if test "$GISBASE" = ""; then
  echo "You must be in GRASS GIS to run this program." >&2
@@ -109,13 +100,42 @@ if [ ! -x "`which r.seg`" ] ; then
     exit 1
 fi
 
+#### check if we have awk
+if [ ! -x "`which awk`" ] ; then
+    g.message -e "awk required, please install awk or gawk first"
+    exit 1
+fi
+
+# GUI input processing
+if [ "$1" != "@ARGS_PARSED@" ] ; then
+  exec g.parser "$0" "$@"
+fi
+
+# strip mapset name
+dtm=`echo $GIS_OPT_dtm | awk 'BEGIN { FS="@" } { print $1 }'`
+
+alpha=$GIS_OPT_alpha
+beta=$GIS_OPT_beta
+lambda=$GIS_OPT_lambda
+
+threshold_comp=$GIS_OPT_threshold_comp
+threshold_curv=$GIS_OPT_threshold_curv
+
+
+if [ $GIS_OPT_resolution ] ; then
+  region_options="res=$GIS_OPT_resolution"
+  
+  g.region -a $region_options
+fi
+
+
 START_DATE=`date`
 
 eval `g.gisenv`
 : ${GISDBASE?} ${LOCATION_NAME?} ${MAPSET?}
 LOCATION="$GISDBASE/$LOCATION_NAME/$MAPSET"
 
-g.message "dtm $dtm"
+g.message "Dtm $dtm"
 
 # g.region rast=$dtm
 # g.region -a res=$resolution
@@ -126,7 +146,7 @@ g.message "Creating curvature map"
 
 # segmentation
 g.message "Segmenting DTM. This may take a while..."
- r.seg --overwrite in_g=$dtm out_u=$dtm"_seg" out_z=$dtm"_disc" alpha=$alpha
+ r.seg --overwrite in_g=$dtm out_u=$dtm"_seg" out_z=$dtm"_disc" alpha=$alpha beta=$beta lambda=$lambda
 
 # clump
 g.message "Creating clump map..."
