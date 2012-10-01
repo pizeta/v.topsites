@@ -90,7 +90,7 @@
 
 #%flag
 #%  key: k
-#%  description: Do not delete intermediate maps
+#%  description: Keep (do not delete) intermediate maps
 #%end
 
 #%flag
@@ -140,10 +140,9 @@ fi
 
 if [ $GIS_FLAG_o -eq 1 ] ; then
   extract_options="--overwrite"
-# elif [ -n "`g.list vect | grep $output`" ] ; then
 elif [ -n "`g.list vect | grep $output`" ] ; then
   g.message "ERROR: option <output>: $output exists."
-  g.message "Change map name or select \"Overwrite existing output map\" option."
+  g.message "Change map name or select \"Allow the output map to overwrite an existing map\" option."
   exit 1
 fi
 
@@ -152,9 +151,6 @@ eval `g.gisenv`
 LOCATION="$GISDBASE/$LOCATION_NAME/$MAPSET"
 
 g.message "Dtm $dtm"
-
-# g.region rast=$dtm
-# g.region -a res=$resolution
 
 # profile curvature from DTM
 g.message "Creating curvature map"
